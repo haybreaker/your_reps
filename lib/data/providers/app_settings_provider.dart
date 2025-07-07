@@ -5,9 +5,8 @@ class AppSettingsProvider extends ChangeNotifier {
   late ThemeData _theme;
   late Color _primaryColor;
   late bool _isDarkMode;
-
-  List<int> _pinnedExercises = [];
-  int _requiredReps = 1;
+  late List<int> _pinnedExercises;
+  late int _requiredReps;
 
   AppSettingsProvider() {
     loadFromPrefs();
@@ -18,6 +17,8 @@ class AppSettingsProvider extends ChangeNotifier {
     _theme = AppSettings.getTheme();
     _isDarkMode = _theme.brightness == Brightness.dark;
     _primaryColor = _theme.colorScheme.primary;
+    _pinnedExercises = AppSettings.getPinnedExercises();
+    _requiredReps = AppSettings.getRequiredReps();
     notifyListeners(); // Even if other consumers only use requiredReps
   }
 

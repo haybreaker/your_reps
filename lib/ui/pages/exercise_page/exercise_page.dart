@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:your_reps/data/objects/exercise.dart';
 import 'package:your_reps/data/objects/set.dart' as exercise_set;
+import 'package:your_reps/data/providers/app_settings_provider.dart';
 import 'package:your_reps/data/providers/unified_provider.dart';
 import 'package:your_reps/ui/pages/home_page/dialogs/exercise_dialog.dart';
 
@@ -67,13 +68,22 @@ class _ExercisePageState extends State<ExercisePage> {
         .toList();
     final reps = context.watch<UnifiedProvider>().reps;
 
-    final prSet = sets.fold<exercise_set.Set?>(null, (prev, s) {
-      final rep = reps.firstWhereOrNull((r) => r.setId == s.id);
-      if (rep == null) return prev;
-      final score = s.weight * rep.count;
-      final prevRep = prev != null ? reps.firstWhereOrNull((r) => r.setId == prev.id) : null;
-      final prevScore = prev != null && prevRep != null ? prev.weight * prevRep.count : -1;
-      return score > prevScore ? s : prev;
+    final minRepCount = context.watch<AppSettingsProvider>().requiredReps;
+
+    final prSet = sets.fold<exercise_set.Set?>(null, (prev, set) {
+      final rep = reps.firstWhereOrNull((r) => r.setId == set.id);
+      if (rep == null || rep.count < minRepCount) return prev;
+
+      if (prev == null) return set;
+
+      final prevRep = reps.firstWhereOrNull((r) => r.setId == prev.id);
+      if (prevRep == null) return set;
+
+      // Compare logic:
+      if (set.weight > prev.weight) return set;
+      if (set.weight == prev.weight && rep.count > prevRep.count) return set;
+
+      return prev;
     });
 
     final bestRep = prSet != null ? reps.firstWhere((r) => r.setId == prSet.id) : null;

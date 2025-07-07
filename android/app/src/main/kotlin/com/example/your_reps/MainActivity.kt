@@ -1,4 +1,4 @@
-package com.example.your_reps
+package com.austechwarrior.your_reps
 
 import io.flutter.embedding.android.FlutterActivity
 

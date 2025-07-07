@@ -1,0 +1,164 @@
+﻿Diagnose log at 2024-04-16T22:40:12Z
+
+AppPath: /usr/local/bin/git-credential-manager
+InstallDir: /usr/local/share/gcm-core/
+Version: 2.4.1
+
+------------
+Diagnostic: Environment
+Skipped: False
+Success: True
+Exception: None
+Log:
+OSType: macOS
+OSVersion: 14.4.1
+Reading environment variables... OK
+ Variables:
+PWD=/Users/jessehayward/Documents/Projects/your_reps
+NVM_CD_FLAGS=-q
+LOGNAME=jessehayward
+_=/usr/local/bin/git-credential-manager
+XPC_FLAGS=0x0
+SHLVL=1
+TMPDIR=/var/folders/8y/_h1gw8cx58b4ydzlkn61ngf80000gn/T/
+NVM_INC=/Users/jessehayward/.nvm/versions/node/v21.0.0/include/node
+LDFLAGS=-L/opt/homebrew/opt/libpq/lib
+CONDA_CHANGEPS1=false
+ANDROID_HOME=/Users/jessehayward/Library/Android/sdk
+TERM_PROGRAM=WarpTerminal
+COMMAND_MODE=unix2003
+CPPFLAGS=-I/opt/homebrew/opt/libpq/include
+__CF_USER_TEXT_ENCODING=0x1F5:0:15
+SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.Bg4thLGJTR/Listeners
+LANG=en_AU.UTF-8
+SSH_SOCKET_DIR=~/.ssh
+GIT_TRACE2_PARENT_SID=3cffea1b-5783-4be0-990b-ed770cf9904b
+NVM_BIN=/Users/jessehayward/.nvm/versions/node/v21.0.0/bin
+WARP_COMBINED_PROMPT_COMMAND_GRID=0
+TERM=xterm-256color
+XPC_SERVICE_NAME=0
+__CFBundleIdentifier=dev.warp.Warp-Stable
+WARP_IS_LOCAL_SHELL_SESSION=1
+WARP_HONOR_PS1=0
+PATH=/opt/homebrew/opt/libpq/bin:/opt/homebrew/lib/ruby/gems/3.3.0/bin:/opt/homebrew/opt/ruby/bin:/Users/jessehayward/.nvm/versions/node/v21.0.0/bin:/opt/homebrew/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Users/jessehayward/Developer/flutter/bin:/Users/jessehayward/.pub-cache/bin://Users/jessehayward/Library/Android/sdk/platform-tools://Users/jessehayward/Library/Android/sdk/tools://Users/jessehayward/Library/Android/sdk/tools/bin
+SHELL=/bin/zsh
+COLORTERM=truecolor
+WARP_USE_SSH_WRAPPER=1
+TERM_PROGRAM_VERSION=v0.2024.04.09.08.01.stable_01
+HOME=/Users/jessehayward
+NVM_DIR=/Users/jessehayward/.nvm
+USER=jessehayward
+OLDPWD=/Users/jessehayward
+
+
+------------
+Diagnostic: File system
+Skipped: False
+Success: True
+Exception: None
+Log:
+Temporary directory is '/var/folders/8y/_h1gw8cx58b4ydzlkn61ngf80000gn/T/'...
+Checking basic file I/O...
+Writing to temporary file '/var/folders/8y/_h1gw8cx58b4ydzlkn61ngf80000gn/T/0c754be7932987ff87dabb3e'... OK
+Reading from temporary file '/var/folders/8y/_h1gw8cx58b4ydzlkn61ngf80000gn/T/0c754be7932987ff87dabb3e'... OK
+Deleting temporary file '/var/folders/8y/_h1gw8cx58b4ydzlkn61ngf80000gn/T/0c754be7932987ff87dabb3e'... OK
+Testing IFileSystem instance...
+UserHomePath: /Users/jessehayward
+UserDataDirectoryPath: /Users/jessehayward/.gcm
+GetCurrentDirectory(): /Users/jessehayward/Documents/Projects/your_reps
+
+------------
+Diagnostic: Networking
+Skipped: False
+Success: True
+Exception: None
+Log:
+Checking networking and HTTP stack...
+Creating HTTP client... OK
+IsNetworkAvailable: True
+Sending HEAD request to http://example.com...Sending HEAD request to https://example.com... OK
+ OK
+Acquiring free TCP port... OK
+Testing local HTTP loopback connections...
+Creating new HTTP listener for http://localhost:53531/... OK
+Waiting for loopback connection... OK
+Writing response... OK
+Waiting for response data... OK
+Loopback connection data OK
+
+------------
+Diagnostic: Git
+Skipped: False
+Success: True
+Exception: None
+Log:
+Getting Git version... OK
+Git version is '2.40.1'
+Locating current repository... OK
+Git repository at '/Users/jessehayward/Documents/Projects/your_reps/.git'
+Listing all Git configuration... OK
+Git configuration:
+file:/opt/homebrew/etc/gitconfig	credential.helper=osxkeychain
+file:/opt/homebrew/etc/gitconfig	credential.helper=
+file:/opt/homebrew/etc/gitconfig	credential.helper=/usr/local/bin/git-credential-manager
+file:/Users/jessehayward/.gitconfig	filter.lfs.required=true
+file:/Users/jessehayward/.gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:/Users/jessehayward/.gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:/Users/jessehayward/.gitconfig	filter.lfs.process=git-lfs filter-process
+file:/Users/jessehayward/.gitconfig	init.defaultbranch=main
+file:/Users/jessehayward/.gitconfig	credential.https://dev.azure.com.usehttppath=true
+file:/Users/jessehayward/.gitconfig	push.autosetupremote=true
+file:/Users/jessehayward/.gitconfig	advice.addignoredfile=false
+file:/Users/jessehayward/.gitconfig	credential.helper=
+file:/Users/jessehayward/.gitconfig	credential.helper=/usr/local/bin/git-credential-manager
+file:.git/config	core.repositoryformatversion=0
+file:.git/config	core.filemode=true
+file:.git/config	core.bare=false
+file:.git/config	core.logallrefupdates=true
+file:.git/config	core.ignorecase=true
+file:.git/config	core.precomposeunicode=true
+file:.git/config	remote.origin.url=https://github.com/haybreaker/your-reps.git
+file:.git/config	remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+file:.git/config	branch.main.remote=origin
+file:.git/config	branch.main.merge=refs/heads/main
+file:.git/config	config.helper=
+file:.git/config	credential.helper=
+
+
+------------
+Diagnostic: Credential storage
+Skipped: False
+Success: True
+Exception: None
+Log:
+ICredentialStore instance is of type: CredentialStore
+Writing test credential... OK
+Reading test credential... OK
+Deleting test credential... OK
+
+------------
+Diagnostic: Microsoft authentication (AAD/MSA)
+Skipped: False
+Success: True
+Exception: None
+Log:
+Broker is not enabled.
+Flow type is: Auto
+Gathering MSAL token cache data... OK
+CacheDirectory: /Users/jessehayward/.local/.IdentityService
+CacheFileName: msal.cache
+CacheFilePath: /Users/jessehayward/.local/.IdentityService/msal.cache
+MacKeyChainAccountName: MSALCache
+MacKeyChainServiceName: Microsoft.Developer.IdentityService
+Creating cache helper... OK
+Verifying MSAL token cache persistence... OK
+
+------------
+Diagnostic: GitHub API
+Skipped: False
+Success: True
+Exception: None
+Log:
+Using 'https://github.com/' as API target.
+Querying '/meta' endpoint... OK
+

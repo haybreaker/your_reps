@@ -27,21 +27,24 @@ class TitleBar extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Expanded(
-                child: TextField(
-                  controller: controller,
-                  onChanged: onChanged,
-                  textAlignVertical: TextAlignVertical.center,
-                  style: TextStyle(color: hintColor),
-                  decoration: InputDecoration(
-                    hintText: "Search Exercise",
-                    hintStyle: TextStyle(color: hintColor.withAlpha(179)),
-                    border: InputBorder.none,
-                    isCollapsed: true,
+                child: Center(
+                  child: TextField(
+                    controller: controller,
+                    onChanged: onChanged,
+                    textAlignVertical: TextAlignVertical.center,
+                    style: TextStyle(color: hintColor),
+                    decoration: InputDecoration(
+                      alignLabelWithHint: true,
+                      contentPadding: EdgeInsets.zero,
+                      hintText: "Search Exercise",
+                      hintStyle: TextStyle(color: hintColor.withAlpha(179)),
+                      border: InputBorder.none,
+                    ),
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                 child: controller.text.isNotEmpty
                     ? IconButton(
                         onPressed: () {

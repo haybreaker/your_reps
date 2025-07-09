@@ -1,6 +1,7 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
-import 'package:your_reps/data/databases/sqlite3/interfaces/sqlite.dart';
+import 'package:your_reps/data/databases/sqlite3/interfaces/database_helper_interface.dart';
 import 'package:your_reps/data/objects/exercise.dart';
 import 'package:your_reps/data/objects/exercise_log.dart';
 import 'package:your_reps/data/objects/muscle.dart';
@@ -9,8 +10,8 @@ import 'package:your_reps/data/objects/user.dart';
 import 'package:your_reps/data/objects/set.dart';
 
 class UnifiedProvider with ChangeNotifier {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
-
+  final DatabaseHelperInterface _dbHelper;
+  UnifiedProvider({required dbHelper}) : _dbHelper = dbHelper;
   // All data lists
   List<User> _users = [];
   List<Muscle> _muscles = [];
@@ -149,6 +150,22 @@ class UnifiedProvider with ChangeNotifier {
   Future<void> deleteRep(int id) async {
     await _dbHelper.deleteRep(id);
     await fetchReps();
+  }
+
+  // Full Database Modifiers
+  Future<void> importDb(PlatformFile path) async {
+    _dbHelper.importDb(path);
+    notifyListeners();
+  }
+
+  Future<void> exportDb(String? path) async {
+    _dbHelper.exportDb(path);
+    notifyListeners();
+  }
+
+  Future<void> deleteDb() async {
+    _dbHelper.deleteDb();
+    notifyListeners();
   }
 
   // Business Logic For Reads / Writes of Complex Models

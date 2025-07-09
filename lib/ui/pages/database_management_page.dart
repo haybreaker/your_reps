@@ -1,9 +1,8 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:your_reps/data/databases/sqlite3/interfaces/sqlite.dart';
 import 'package:your_reps/data/providers/unified_provider.dart';
 
 class DatabaseManagementPage extends StatefulWidget {
@@ -14,28 +13,26 @@ class DatabaseManagementPage extends StatefulWidget {
 }
 
 class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
-  final db = DatabaseHelper();
-  late Future<void> _dbReady;
+  late final UnifiedProvider unifiedProvider;
 
   @override
   void initState() {
     super.initState();
-    _dbReady = db.database; // Ensure DB is initialized
+    unifiedProvider = context.read<UnifiedProvider>();
   }
 
   Future<void> importDB() async {
-    await _dbReady;
     try {
       FilePickerResult? result;
-      result = await FilePicker.platform.pickFiles(type: FileType.any);
-      if (result != null && result.files.single.path != null) {
-        final path = result.files.single.path!;
-        if (!path.endsWith(".db")) {
+      result = await FilePicker.platform.pickFiles(type: FileType.any, withData: true);
+      if (result != null && result.names.single != null) {
+        final pathfileName = result.names.single;
+        if (!pathfileName!.endsWith(".db")) {
           _showSnackbar("Invalid file type selected. Please choose a .db file.");
           return;
         }
 
-        await db.importDb(path);
+        await unifiedProvider.importDb(result.files.single);
         _showSnackbar("Database imported successfully.");
       } else {
         _showSnackbar("Import cancelled.");
@@ -46,31 +43,31 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
   }
 
   Future<void> exportDB() async {
-    await _dbReady;
-
     try {
-      String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       final exportFileName = "your_reps_export_$timestamp.db";
 
-      String? selectedDir = await FilePicker.platform.getDirectoryPath();
+      String? exportPath;
 
-      if (selectedDir == null) {
-        _showSnackbar("Export cancelled.");
-        return;
+      if (!kIsWeb) {
+        // 📦 DESKTOP / MOBILE
+        final selectedDir = await FilePicker.platform.getDirectoryPath();
+        if (selectedDir == null) {
+          _showSnackbar("Export cancelled.");
+          return;
+        }
+
+        exportPath = path.join(selectedDir, exportFileName);
+        _showSnackbar("Exported to:\n$exportPath");
       }
 
-      final exportPath = '$selectedDir/$exportFileName';
-      await db.exportDB(exportPath);
-
-      _showSnackbar("Exported to:\n$exportPath");
+      unifiedProvider.exportDb(exportPath);
     } catch (e) {
       _showSnackbar("Error exporting DB: $e");
     }
   }
 
   Future<void> deleteDB() async {
-    await _dbReady;
-
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -84,7 +81,7 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
     );
 
     if (confirm == true) {
-      await db.deleteDB();
+      await unifiedProvider.deleteDb();
       _showSnackbar("Database deleted.");
     }
   }
@@ -117,46 +114,37 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _dbReady,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-
-        return Scaffold(
-          appBar: AppBar(title: const Text("Database Management")),
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildCard(
-                  title: "Import Database",
-                  subtitle: "Import a routine from another YourReps backup",
-                  icon: Icons.file_download,
-                  onTap: importDB,
-                ),
-                const SizedBox(height: 30),
-                _buildCard(
-                  title: "Export Database",
-                  subtitle: "Export your progress to a selected folder",
-                  icon: Icons.file_upload,
-                  onTap: exportDB,
-                ),
-                const SizedBox(height: 30),
-                _buildCard(
-                  title: "Delete Database",
-                  subtitle: "Clear all data permanently from YourReps",
-                  icon: Icons.delete_forever,
-                  onTap: deleteDB,
-                ),
-              ],
+    return Scaffold(
+      appBar: AppBar(title: const Text("Database Management")),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildCard(
+              title: "Import Database",
+              subtitle: "Import a routine from another YourReps backup",
+              icon: Icons.file_download,
+              onTap: importDB,
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 30),
+            _buildCard(
+              title: "Export Database",
+              subtitle: "Export your progress to a selected folder",
+              icon: Icons.file_upload,
+              onTap: exportDB,
+            ),
+            const SizedBox(height: 30),
+            _buildCard(
+              title: "Delete Database",
+              subtitle: "Clear all data permanently from YourReps",
+              icon: Icons.delete_forever,
+              onTap: deleteDB,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,18 +1,18 @@
 class User {
   int? id;
-  String trainingGoal;
-  String name;
-  int age;
-  double weight;
-  double height;
+  String? trainingGoal;
+  String? name;
+  int? age;
+  double? weight;
+  double? height;
 
   User({
     this.id,
-    required this.trainingGoal,
-    required this.name,
-    required this.age,
-    required this.weight,
-    required this.height,
+    this.trainingGoal,
+    this.name,
+    this.age,
+    this.weight,
+    this.height,
   });
 
   Map<String, dynamic> toMap() {

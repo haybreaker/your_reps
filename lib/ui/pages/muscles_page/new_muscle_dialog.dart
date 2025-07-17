@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:your_reps/data/objects/muscle.dart';
 
-class NewMuscleDialog extends StatefulWidget {
-  const NewMuscleDialog({super.key});
+class MuscleDialog extends StatefulWidget {
+  final Muscle? existingMuscle; // null for create, muscle object for edit
+
+  const MuscleDialog({super.key, this.existingMuscle});
 
   @override
-  State<NewMuscleDialog> createState() => _NewMuscleDialogState();
+  State<MuscleDialog> createState() => _MuscleDialogState();
 }
 
-class _NewMuscleDialogState extends State<NewMuscleDialog> {
+class _MuscleDialogState extends State<MuscleDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _recoveryIndexController = TextEditingController();
@@ -19,6 +21,22 @@ class _NewMuscleDialogState extends State<NewMuscleDialog> {
   final _locations = ['Arms', 'Chest', 'Back', 'Core', 'Legs'];
   final _pushPullOptions = ['Push', 'Pull', 'Neutral'];
 
+  bool get _isEditing => widget.existingMuscle != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // If editing, populate fields with existing data
+    if (_isEditing) {
+      final muscle = widget.existingMuscle!;
+      _nameController.text = muscle.name;
+      _recoveryIndexController.text = muscle.recoveryIndex.toString();
+      _selectedLocation = muscle.location;
+      _selectedPushPull = muscle.pushPull;
+    }
+  }
+
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       final muscle = Muscle(
@@ -27,11 +45,19 @@ class _NewMuscleDialogState extends State<NewMuscleDialog> {
         recoveryIndex: int.parse(_recoveryIndexController.text),
         pushPull: _selectedPushPull!,
       );
+      if (widget.existingMuscle != null) muscle.id = widget.existingMuscle!.id;
       Navigator.pop(context, muscle);
     }
   }
 
   void _cancel() => Navigator.pop(context, null);
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _recoveryIndexController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +71,7 @@ class _NewMuscleDialogState extends State<NewMuscleDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Add Muscle", style: Theme.of(context).textTheme.headlineSmall),
+                Text(_isEditing ? "Edit Muscle" : "Add Muscle", style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 16),
 
                 // Name
@@ -110,7 +136,7 @@ class _NewMuscleDialogState extends State<NewMuscleDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(onPressed: _cancel, child: const Text("Cancel")),
-                    FilledButton(onPressed: _submit, child: const Text("Create")),
+                    FilledButton(onPressed: _submit, child: Text(_isEditing ? "Update" : "Create")),
                   ],
                 )
               ],

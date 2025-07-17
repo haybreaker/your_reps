@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:your_reps/data/objects/exercise.dart';
+import 'package:your_reps/data/objects/exercise_muscle.dart';
 import 'package:your_reps/data/objects/muscle.dart';
 import 'package:your_reps/data/objects/rep.dart';
 import 'package:your_reps/data/objects/set.dart' as exercise_set;
 
 class TodaySummaryWidget extends StatelessWidget {
   final List logs;
-  final List<exercise_set.Set> sets;
-  final List<Reps> reps;
+  final List<exercise_set.WorkoutSet> sets;
+  final List<Rep> reps;
   final List<Exercise> exercises;
+  final List<ExerciseMuscle> exerciseMuscles;
   final List<Muscle> muscles;
 
   const TodaySummaryWidget({
@@ -18,6 +20,7 @@ class TodaySummaryWidget extends StatelessWidget {
     required this.sets,
     required this.reps,
     required this.exercises,
+    required this.exerciseMuscles,
     required this.muscles,
   });
 
@@ -42,9 +45,9 @@ class TodaySummaryWidget extends StatelessWidget {
 
       final log = todayLogs.firstWhere((l) => l.id == set.exerciseLogId);
       final exercise = exercises.firstWhereOrNull((e) => e.id == log.exerciseId);
-      final exerciseMuscles = exercise?.muscleId ?? [];
+      final em = exerciseMuscles.where((em) => em.exerciseId == exercise!.id).map((em) => em.muscleId).toList();
 
-      for (var mId in exerciseMuscles) {
+      for (var mId in em) {
         final m = muscles.firstWhereOrNull((muscle) => muscle.id == mId);
         if (m != null) {
           muscleCounts[m.location] = (muscleCounts[m.location] ?? 0) + 1;

@@ -8,11 +8,12 @@ import 'package:your_reps/data/providers/unified_provider.dart';
 import 'package:your_reps/ui/pages/app_settings_page/app_settings_page.dart';
 import 'package:your_reps/ui/pages/database_management_page.dart';
 import 'package:your_reps/ui/pages/exercise_page/exercise_page.dart';
-import 'package:your_reps/ui/pages/home_page/dialogs/exercise_dialog.dart';
+import 'package:your_reps/ui/dialogs/exercise_dialog.dart';
 import 'package:your_reps/ui/pages/home_page/home_drawer.dart';
 import 'package:your_reps/ui/pages/home_page/widgets/title_bar.dart';
 import 'package:your_reps/ui/pages/home_page/widgets/today_summary_cards.dart';
 import 'package:your_reps/ui/pages/muscles_page/muscles_page.dart';
+import 'package:your_reps/ui/pages/user_setup_page/user_setup_page.dart';
 import 'package:your_reps/ui/widgets/exercise_tile.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,19 +26,36 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  bool _pushedUserSetup = false;
 
   @override
   void initState() {
     super.initState();
-    final provider = context.read<UnifiedProvider>();
-    provider.fetchExercises();
-    provider.fetchMuscles();
-    provider.fetchExerciseLogs();
-    provider.fetchSets();
-    provider.fetchReps();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<UnifiedProvider>();
+      await provider.fetchAll();
+
+      if (provider.users.isEmpty && !_pushedUserSetup) {
+        _pushedUserSetup = true;
+
+        final created = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserSetupPage()),
+        );
+
+        if (created == true) {
+          await provider.fetchAll();
+          setState(() {});
+        }
+      }
+    });
   }
 
-  void createExercise(exercise) => context.read<UnifiedProvider>().addExercise(exercise);
+  Future<void> createExercise(exercise, muscles) async {
+    await context.read<UnifiedProvider>().addExercise(exercise);
+    var exerciseWithId = context.read<UnifiedProvider>().exercises.last;
+    context.read<UnifiedProvider>().addExerciseMuscles(exerciseWithId, muscles);
+  }
 
   Future<void> pinExercise(exercise) async {
     var pinned = context.read<AppSettingsProvider>().pinnedExercises;
@@ -57,13 +75,21 @@ class _HomePageState extends State<HomePage> {
     final unified = context.watch<UnifiedProvider>();
     final settingsProvider = context.watch<AppSettingsProvider>();
 
+    // Only continue if user exists
+    if (unified.users.isEmpty) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final exercises = unified.exercises;
+    final exerciseMuscles = unified.exerciseMuscles;
     final muscles = unified.muscles;
     final sets = unified.sets;
     final reps = unified.reps;
     final logs = unified.exerciseLogs;
-
     final pinnedExercises = settingsProvider.pinnedExercises;
+
     final filteredExercises = (searchQuery.isEmpty
             ? exercises
             : exercises.where((e) => e.name.toLowerCase().contains(searchQuery.toLowerCase())))
@@ -88,13 +114,10 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add_rounded),
-        onPressed: () async {
-          final exercise = await showDialog(context: context, builder: (context) => const ExerciseDialog());
-          if (exercise != null) createExercise(exercise);
-        },
-      ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: const Icon(Icons.add_rounded),
+          onPressed: () async =>
+              await showDialog(context: context, builder: (context) => ExerciseDialog(onComplete: createExercise))),
       drawer: HomeDrawer(context).getInstance(
         onMuscles: () => Navigator.push(
           context,
@@ -120,8 +143,9 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                      settingsProvider.isDarkMode ? "assets/images/app_icon_white.png" : "assets/images/app_icon.png",
-                      height: 50),
+                    settingsProvider.isDarkMode ? "assets/images/app_icon_white.png" : "assets/images/app_icon.png",
+                    height: 50,
+                  ),
                   const SizedBox(height: 8),
                   TitleBar(
                     controller: _searchController,
@@ -136,30 +160,37 @@ class _HomePageState extends State<HomePage> {
                         physics: const BouncingScrollPhysics(),
                         children: [
                           const SizedBox(height: 8),
-                          TodaySummaryWidget(logs: logs, sets: sets, reps: reps, exercises: exercises, muscles: muscles),
+                          TodaySummaryWidget(
+                            logs: logs,
+                            sets: sets,
+                            reps: reps,
+                            exercises: exercises,
+                            exerciseMuscles: exerciseMuscles,
+                            muscles: muscles,
+                          ),
                           Padding(
                             padding: const EdgeInsets.only(top: 8, bottom: 12),
-                            child: Text("Exercise History",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                            child: Text(
+                              "Exercise History",
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                            ),
                           ),
                           ...filteredExercises.map((exercise) {
-                            // Get muscle names
-                            final muscleNames = exercise.muscleId
+                            final muscleNames = unified
+                                .getMuscleIdsForExercise(exercise.id!)
                                 .map((id) => muscles.firstWhereOrNull((m) => m.id == id))
                                 .map((m) => m?.name ?? "Deleted Muscle")
                                 .toList();
 
-                            // Get logs for this exercise
                             final exerciseLogs = logs.where((log) => log.exerciseId == exercise.id).toList();
-
-                            // Get sets & reps for most recent log
                             final latestLog = exerciseLogs.isNotEmpty ? exerciseLogs.first : null;
+
                             final latestSets = latestLog != null
                                 ? sets.where((s) => s.exerciseLogId == latestLog.id).toList()
-                                : <exercise_set.Set>[];
+                                : <exercise_set.WorkoutSet>[];
 
                             final latestSetData = latestSets.map((s) {
                               final r = reps.firstWhereOrNull((r) => r.setId == s.id);
@@ -180,14 +211,17 @@ class _HomePageState extends State<HomePage> {
                               elevation: 0,
                               color: Theme.of(context).colorScheme.surface,
                               child: ExerciseTile(
-                                  exercise: exercise,
-                                  onTap: () => Navigator.push(
-                                      context, MaterialPageRoute(builder: (context) => ExercisePage(exercise: exercise))),
-                                  muscles: muscleNames,
-                                  lastSetInfo: latestSetData.join(', '),
-                                  lastDate: dateStr,
-                                  isPinned: pinnedExercises.contains(exercise.id),
-                                  onPin: () => pinExercise(exercise)),
+                                exercise: exercise,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => ExercisePage(exerciseId: exercise.id!)),
+                                ),
+                                muscles: muscleNames,
+                                lastSetInfo: latestSetData.join(', '),
+                                lastDate: dateStr,
+                                isPinned: pinnedExercises.contains(exercise.id),
+                                onPin: () => pinExercise(exercise),
+                              ),
                             );
                           }).toList(),
                         ],

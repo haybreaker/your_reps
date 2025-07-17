@@ -4,14 +4,17 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:your_reps/data/objects/exercise.dart';
+import 'package:your_reps/data/objects/muscle.dart';
+import 'package:your_reps/data/objects/rep.dart';
 import 'package:your_reps/data/objects/set.dart' as exercise_set;
 import 'package:your_reps/data/providers/app_settings_provider.dart';
 import 'package:your_reps/data/providers/unified_provider.dart';
-import 'package:your_reps/ui/pages/home_page/dialogs/exercise_dialog.dart';
+import 'package:your_reps/ui/dialogs/exercise_dialog.dart';
+import 'package:your_reps/ui/dialogs/workout_set_dialog.dart';
 
 class ExercisePage extends StatefulWidget {
-  final Exercise exercise;
-  const ExercisePage({required this.exercise, super.key});
+  final int exerciseId; // Change to ID instead of Exercise object
+  const ExercisePage({required this.exerciseId, super.key});
 
   @override
   State<ExercisePage> createState() => _ExercisePageState();
@@ -23,11 +26,11 @@ class _ExercisePageState extends State<ExercisePage> {
   final TextEditingController _repController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
 
-  void _addSet() {
+  void _addSet(Exercise exercise) {
     if (_repController.text.isNotEmpty && _weightController.text.isNotEmpty) {
       setState(() {
         context.read<UnifiedProvider>().recordSet(
-              widget.exercise,
+              exercise,
               double.parse(_weightController.text),
               int.parse(_repController.text),
             );
@@ -36,41 +39,68 @@ class _ExercisePageState extends State<ExercisePage> {
     }
   }
 
-  Future<void> editExercise() async {
-    var newExercise = await showDialog(
+  Future<void> editExercise(Exercise exercise, List<Muscle> musclesForExercise) async {
+    showDialog(
         context: context,
         builder: (context) => ExerciseDialog(
-              exercise: widget.exercise,
-            ));
-    if (mounted && newExercise != null) context.read<UnifiedProvider>().updateExercise(newExercise);
+            exercise: exercise,
+            muscles: musclesForExercise,
+            onComplete: (updatedExercise, muscles) async {
+              if (mounted) {
+                // Update both exercise and muscles
+                await context.read<UnifiedProvider>().updateExercise(updatedExercise);
+                await context.read<UnifiedProvider>().updateExerciseMuscles(updatedExercise, muscles);
+
+                // Force a rebuild by calling setState
+                setState(() {});
+              }
+            }));
   }
 
   @override
   void initState() {
     super.initState();
-    context.read<UnifiedProvider>().fetchMuscles();
-    context.read<UnifiedProvider>().fetchExerciseLogs();
-    context.read<UnifiedProvider>().fetchSets();
-    context.read<UnifiedProvider>().fetchReps();
+    _initializeData();
+  }
+
+  void _initializeData() {
+    final provider = context.read<UnifiedProvider>();
+    provider.fetchMuscles();
+    provider.fetchExerciseMuscles();
+    provider.fetchExerciseLogs();
+    provider.fetchSets();
+    provider.fetchReps();
+    provider.fetchExercises(); // Make sure exercises are loaded
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final provider = context.watch<UnifiedProvider>();
 
-    final muscles = context.watch<UnifiedProvider>().muscles;
-    final exerciseLogs =
-        context.watch<UnifiedProvider>().exerciseLogs.where((el) => el.exerciseId == widget.exercise.id).toList();
-    final sets = context
-        .watch<UnifiedProvider>()
-        .sets
-        .where((s) => exerciseLogs.map((el) => el.id).contains(s.exerciseLogId))
-        .toList();
-    final reps = context.watch<UnifiedProvider>().reps;
+    // Get the current exercise by ID (this will reflect any updates)
+    final exercise = provider.exercises.firstWhereOrNull((e) => e.id == widget.exerciseId);
+
+    // If exercise is not found, show error
+    if (exercise == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Exercise Not Found')),
+        body: const Center(child: Text('Exercise not found')),
+      );
+    }
+
+    final muscles = provider.muscles;
+    final exerciseMuscles = provider.exerciseMuscles;
+    final exerciseLogs = provider.exerciseLogs.where((el) => el.exerciseId == exercise.id).toList();
+    final sets = provider.sets.where((s) => exerciseLogs.map((el) => el.id).contains(s.exerciseLogId)).toList();
+    final reps = provider.reps;
+
+    final linkedMuscleIds = exerciseMuscles.where((em) => em.exerciseId == exercise.id).map((em) => em.muscleId).toList();
+    final musclesForExercise = linkedMuscleIds.map((id) => muscles.firstWhereOrNull((m) => m.id == id)).nonNulls.toList();
 
     final minRepCount = context.watch<AppSettingsProvider>().requiredReps;
 
-    final prSet = sets.fold<exercise_set.Set?>(null, (prev, set) {
+    final prSet = sets.fold<exercise_set.WorkoutSet?>(null, (prev, set) {
       final rep = reps.firstWhereOrNull((r) => r.setId == set.id);
       if (rep == null || rep.count < minRepCount) return prev;
 
@@ -95,8 +125,8 @@ class _ExercisePageState extends State<ExercisePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.exercise.name),
-        actions: [IconButton(icon: const Icon(Icons.settings), onPressed: editExercise)],
+        title: Text(exercise.name), // This will update automatically
+        actions: [IconButton(icon: const Icon(Icons.settings), onPressed: () => editExercise(exercise, musclesForExercise))],
       ),
       body: GestureDetector(
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -106,10 +136,20 @@ class _ExercisePageState extends State<ExercisePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Targets: ${widget.exercise.muscleId.map((id) => muscles.firstWhereOrNull((muscle) => muscle.id == id)?.name ?? "Deleted Muscle").join(", ")}',
+                'Targets: ${musclesForExercise.map((m) => m.name).join(", ")}',
                 style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
+              if (exercise.notes != null && exercise.notes!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text('Notes', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Text(
+                  exercise.notes!,
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+              ],
               Card(
                 elevation: 1,
                 child: Padding(
@@ -183,21 +223,7 @@ class _ExercisePageState extends State<ExercisePage> {
                             const SizedBox(height: 8),
                             ...setList.map((s) {
                               final setReps = reps.firstWhere((r) => r.setId == s.id);
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 6),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHighest.withAlpha(51),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("${s.weight}kg", style: theme.textTheme.bodyMedium),
-                                    Text("${setReps.count} reps", style: theme.textTheme.bodyMedium),
-                                  ],
-                                ),
-                              );
+                              return WorkoutSetCard(workoutSet: s, rep: setReps);
                             }),
                           ],
                         ),
@@ -225,21 +251,7 @@ class _ExercisePageState extends State<ExercisePage> {
                         const SizedBox(height: 8),
                         ...setList.map((s) {
                           final setReps = reps.firstWhere((r) => r.setId == s.id);
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("${s.weight}kg", style: theme.textTheme.bodyMedium),
-                                Text("${setReps.count} reps", style: theme.textTheme.bodyMedium),
-                              ],
-                            ),
-                          );
+                          return WorkoutSetCard(workoutSet: s, rep: setReps);
                         }),
                       ],
                     ),
@@ -288,13 +300,61 @@ class _ExercisePageState extends State<ExercisePage> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                     ),
-                    onPressed: _addSet,
+                    onPressed: () => _addSet(exercise),
                     child: const Icon(Icons.add),
                   ),
                 ],
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class WorkoutSetCard extends StatelessWidget {
+  final exercise_set.WorkoutSet workoutSet;
+  final Rep rep;
+
+  const WorkoutSetCard({
+    super.key,
+    required this.workoutSet,
+    required this.rep,
+  });
+
+  void onTap(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) => WorkoutSetDialog(
+            workoutSet: workoutSet,
+            rep: rep,
+            onCompleted: (s, r) {
+              context.read<UnifiedProvider>().updateSet(s);
+              context.read<UnifiedProvider>().updateRep(r); // Fixed: was updateSet twice
+            }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => onTap(context),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text("${workoutSet.weight}kg", style: theme.textTheme.bodyMedium),
+            Text("${rep.count} reps", style: theme.textTheme.bodyMedium),
+          ],
         ),
       ),
     );

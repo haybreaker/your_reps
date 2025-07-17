@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:your_reps/data/objects/exercise.dart';
+import 'package:your_reps/data/objects/muscle.dart';
 import 'package:your_reps/data/providers/unified_provider.dart';
 
 class ExerciseDialog extends StatefulWidget {
   // 1. Add an optional exercise parameter for editing
   final Exercise? exercise;
+  final List<Muscle>? muscles;
+  final Function(Exercise, List<Muscle>) onComplete;
 
-  const ExerciseDialog({super.key, this.exercise});
+  const ExerciseDialog({super.key, this.exercise, this.muscles, required this.onComplete});
 
   @override
   State<ExerciseDialog> createState() => _ExerciseDialogState();
@@ -20,9 +23,10 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _photoLinkController;
   late final TextEditingController _videoLinkController;
+  late final TextEditingController _notesController;
 
   // State variables for non-text fields
-  List<int> muscleId = [];
+  List<int> muscleIds = [];
   int functionIsolationScale = 5;
 
   // Helper to determine if we are in "edit" mode
@@ -37,14 +41,17 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
     _nameController = TextEditingController();
     _photoLinkController = TextEditingController();
     _videoLinkController = TextEditingController();
+    _notesController = TextEditingController();
 
     // 3. If editing, pre-fill the form with existing exercise data
     if (isEditing) {
       final exercise = widget.exercise!;
+      final muscles = widget.muscles!;
       _nameController.text = exercise.name;
       _photoLinkController.text = exercise.photoLink ?? '';
       _videoLinkController.text = exercise.videoLink ?? '';
-      muscleId = List<int>.from(exercise.muscleId); // Create a mutable copy
+      _notesController.text = exercise.notes ?? '';
+      muscleIds = List<int>.from(muscles.map((m) => m.id!)).toList(); // Create a mutable copy
       functionIsolationScale = exercise.functionIsolationScale;
     }
   }
@@ -91,7 +98,7 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
                     final selected = await showDialog<List<int>>(
                       context: context,
                       builder: (context) {
-                        List<int> tempSelected = [...muscleId];
+                        List<int> tempSelected = [...muscleIds];
                         return AlertDialog(
                           title: const Text("Select Muscles"),
                           content: StatefulBuilder(
@@ -136,7 +143,7 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
 
                     if (selected != null) {
                       setState(() {
-                        muscleId = selected;
+                        muscleIds = selected;
                       });
                     }
                   },
@@ -147,17 +154,17 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
                       border: Border.all(color: Theme.of(context).colorScheme.outline),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: muscleId.isEmpty
+                    child: muscleIds.isEmpty
                         ? Text("Tap to select muscles", style: Theme.of(context).textTheme.titleMedium)
                         : Wrap(
                             spacing: 6,
                             runSpacing: 4,
-                            children: muscleId
+                            children: muscleIds
                                 .map((id) =>
                                     muscles.firstWhere((m) => m.id == id, orElse: () => throw Exception('Muscle not found')))
                                 .map((m) => InputChip(
                                       label: Text(m.name),
-                                      onDeleted: () => setState(() => muscleId.remove(m.id)),
+                                      onDeleted: () => setState(() => muscleIds.remove(m.id)),
                                     ))
                                 .toList(),
                           ),
@@ -169,7 +176,6 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
                 TextFormField(
                   controller: _photoLinkController, // Use controller
                   decoration: const InputDecoration(labelText: 'Photo Link', border: OutlineInputBorder()),
-                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -196,6 +202,23 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
                 ),
                 const SizedBox(height: 24),
 
+                // Notes Input
+                Text("Notes", style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _notesController,
+                  minLines: 4,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  decoration: const InputDecoration(
+                    labelText: 'Enter any extra information here...',
+                    border: OutlineInputBorder(),
+                    alignLabelWithHint: true,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
                 // Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -211,14 +234,15 @@ class _ExerciseDialogState extends State<ExerciseDialog> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           final newExercise = Exercise(
-                            id: widget.exercise?.id, // Preserve ID if editing
-                            name: _nameController.text,
-                            muscleId: muscleId,
-                            photoLink: _photoLinkController.text,
-                            videoLink: _videoLinkController.text,
-                            functionIsolationScale: functionIsolationScale,
-                          );
-                          Navigator.of(context).pop(newExercise);
+                              id: widget.exercise?.id, // Preserve ID if editing
+                              name: _nameController.text,
+                              photoLink: _photoLinkController.text,
+                              videoLink: _videoLinkController.text,
+                              functionIsolationScale: functionIsolationScale,
+                              notes: _notesController.text);
+                          widget.onComplete(
+                              newExercise, [...muscleIds].map((mid) => muscles.firstWhere((m) => m.id == mid)).toList());
+                          Navigator.pop(context);
                         }
                       },
                     ),

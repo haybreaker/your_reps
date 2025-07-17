@@ -1,29 +1,30 @@
-import 'dart:convert';
-
 class Exercise {
   int? id;
   String name;
-  List<int> muscleId;
+  String? equipmentType;
   String? photoLink;
   String? videoLink;
+  String? notes;
   int functionIsolationScale;
 
   Exercise({
     this.id,
     required this.name,
-    required this.muscleId,
     required this.photoLink,
     required this.videoLink,
     required this.functionIsolationScale,
+    this.equipmentType,
+    this.notes,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
-      'muscle_id': jsonEncode(muscleId),
+      'equipment_type': equipmentType,
       'photo_link': photoLink,
       'video_link': videoLink,
+      'notes': notes,
       'function_isolation_scale': functionIsolationScale,
     };
   }
@@ -32,9 +33,10 @@ class Exercise {
     return Exercise(
       id: map['id'],
       name: map['name'],
-      muscleId: List<int>.from(jsonDecode(map['muscle_id'])),
+      equipmentType: map['equipment_type'],
       photoLink: map['photo_link'],
       videoLink: map['video_link'],
+      notes: map['notes'],
       functionIsolationScale: map['function_isolation_scale'],
     );
   }

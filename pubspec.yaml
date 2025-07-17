@@ -13,22 +13,23 @@ dependencies:
   cupertino_icons: ^1.0.6
   provider: ^6.1.2
   flutter_animate: ^4.5.0
-  sqflite: ^2.3.3+1
   path: ^1.9.1
   intl: ^0.20.2
   table_calendar: ^3.2.0
   collection: ^1.19.1
+  flutter_native_splash: ^2.4.6
   flutter_launcher_icons: ^0.14.4
   file_picker: ^10.2.0
   path_provider: ^2.1.5
   shared_preferences: ^2.5.3
-  sqlite3: ^2.0.0
-  sqflite_common_ffi: ^2.3.6
-  sqflite_common_ffi_web: ^1.0.0
+  sqlite3: ^2.7.6
+  sqlite3_flutter_libs: ^0.5.34
   universal_html: ^2.2.4
   cross_file: ^0.3.4+2
 
 dev_dependencies:
+  drift_dev: ^2.26.1
+  build_runner: ^2.4.15
   flutter_test:
     sdk: flutter
 
@@ -39,9 +40,18 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+
   fonts:
     - family: OpenSans
       fonts:
         - asset: assets/fonts/OpenSans.ttf
         - asset: assets/fonts/OpenSans-Italic.ttf
           style: italic
+
+flutter_native_splash:
+  color: "#294B64"
+  image: assets/images/app_icon_white.png
+
+  ios: true
+  web: true
+  android: true

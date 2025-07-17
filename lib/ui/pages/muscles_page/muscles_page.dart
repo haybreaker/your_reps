@@ -38,8 +38,11 @@ class _MusclesPageState extends State<MusclesPage> {
                     onTap: () async {
                       final newMuscle = await showDialog(
                         context: context,
-                        builder: (context) => const NewMuscleDialog(),
+                        builder: (context) => MuscleDialog(existingMuscle: muscle),
                       );
+                      if (newMuscle != null) {
+                        context.read<UnifiedProvider>().updateMuscle(newMuscle);
+                      }
                     },
                     child: Card(
                       elevation: 1,
@@ -73,10 +76,10 @@ class _MusclesPageState extends State<MusclesPage> {
         onPressed: () async {
           final newMuscle = await showDialog(
             context: context,
-            builder: (context) => const NewMuscleDialog(),
+            builder: (context) => const MuscleDialog(),
           );
           if (newMuscle != null) {
-            context.read<UnifiedProvider>().addMuscle(newMuscle);
+            context.read<UnifiedProvider>().updateMuscle(newMuscle);
           }
         },
         child: const Icon(Icons.add),

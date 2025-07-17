@@ -6,9 +6,13 @@ class HomeDrawer {
   BuildContext context;
   HomeDrawer(this.context);
 
-  Widget getInstance(
-      {required void Function() onMuscles, required void Function() onDatabase, required void Function() onSettings}) {
-    final darkMode = context.read<AppSettingsProvider>().isDarkMode;
+  Widget getInstance({
+    required void Function() onMuscles,
+    required void Function() onDatabase,
+    required void Function() onSettings,
+  }) {
+    final iconColor = Theme.of(context).iconTheme.color;
+
     return Drawer(
       child: SafeArea(
         child: Padding(
@@ -16,7 +20,7 @@ class HomeDrawer {
           child: Column(
             children: [
               const SizedBox(height: 12),
-              Image.asset("assets/images/YourRepsIcon.png", color: darkMode ? Colors.white : null, height: 96),
+              Image.asset("assets/images/YourRepsIcon.png", color: iconColor, height: 96),
               const SizedBox(height: 12),
               const Divider(height: 1),
               const SizedBox(height: 12),
@@ -26,8 +30,6 @@ class HomeDrawer {
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
-
-              /// List section with dense styling
               ListTileTheme(
                 contentPadding: EdgeInsets.zero,
                 minVerticalPadding: 4,
@@ -37,22 +39,21 @@ class HomeDrawer {
                   children: [
                     ListTile(
                       visualDensity: VisualDensity.compact,
-                      leading:
-                          Image.asset("assets/icons/arm.png", height: 20, color: darkMode ? Colors.white : Colors.black),
+                      leading: Image.asset("assets/icons/arm.png", height: 20, color: iconColor),
                       title: Text("Muscles", style: Theme.of(context).textTheme.bodyMedium),
                       subtitle: Text("View and edit muscles", style: Theme.of(context).textTheme.bodySmall),
                       onTap: onMuscles,
                     ),
                     ListTile(
                       visualDensity: VisualDensity.compact,
-                      leading: Image.asset("assets/icons/db.png", height: 20, color: darkMode ? Colors.white : Colors.black),
+                      leading: Image.asset("assets/icons/db.png", height: 20, color: iconColor),
                       title: Text("Database", style: Theme.of(context).textTheme.bodyMedium),
                       subtitle: Text("Import/Export your data", style: Theme.of(context).textTheme.bodySmall),
                       onTap: onDatabase,
                     ),
                     ListTile(
                       visualDensity: VisualDensity.compact,
-                      leading: const Icon(Icons.settings, size: 20),
+                      leading: Icon(Icons.settings, size: 20, color: iconColor),
                       title: Text("Settings", style: Theme.of(context).textTheme.bodyMedium),
                       subtitle: Text("Adjust App Behaviour and Looks", style: Theme.of(context).textTheme.bodySmall),
                       onTap: onSettings,

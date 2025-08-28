@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                                 .toList();
 
                             final exerciseLogs = logs.where((log) => log.exerciseId == exercise.id).toList();
-                            final latestLog = exerciseLogs.isNotEmpty ? exerciseLogs.first : null;
+                            final latestLog = exerciseLogs.isNotEmpty ? exerciseLogs.last : null;
 
                             final latestSets = latestLog != null
                                 ? sets.where((s) => s.exerciseLogId == latestLog.id).toList()

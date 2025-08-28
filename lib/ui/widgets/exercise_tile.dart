@@ -27,12 +27,13 @@ class ExerciseTile extends StatelessWidget {
     return HSLColor.fromAHSL(1.0, hue.toDouble(), 0.45, 0.65).toColor();
   }
 
-  String getAcronym(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length > 1) return parts.first[0].toUpperCase();
-    if (parts.first.length >= 2) return parts.first.substring(0, 2).toUpperCase();
-    return parts.first[0].toUpperCase();
-  }
+  String getAcronym(String name) => name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((s) => s.isNotEmpty && RegExp(r'^[a-zA-Z]').hasMatch(s))
+      .map((s) => s[0].toUpperCase())
+      .take(3)
+      .join();
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +58,17 @@ class ExerciseTile extends StatelessWidget {
                     // The radius controls the size of the circle.
                     radius: 24, // Adjust this value to your desired size
                     backgroundColor: color,
-                    child: Text(
-                      acronym,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: FittedBox(
+                        child: Text(
+                          acronym,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 15.0),
